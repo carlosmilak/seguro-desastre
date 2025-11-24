@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa - RescueLink</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Marcador pulsante tipo sonar (tamanho agora vem do ícone) */
+        .pulse-marker {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: currentColor;          /* cor do centro */
+            box-shadow: 0 0 10px currentColor; /* glow */
+        }
+
+        .pulse-marker::before,
+        .pulse-marker::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2px solid currentColor;   /* círculos de fora */
+            opacity: 0.7;
+            animation: sonar 1.8s infinite;
+        }
+
+        /* Segundo círculo com atraso pra parecer vários anéis */
+        .pulse-marker::after {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes sonar {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            70% {
+                transform: scale(3);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    // Define a cor de acordo com o tipo de ajuda
+    function getColorByType(type = "") {
+        let raw = type.toLowerCase();
+        // remove acentos
+        let normalized = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        // também trata o caso "�gua" pegando só "gua"
+        if (normalized.includes("agua") || raw.includes("gua")) return "#3CA0FF";       // azul (água)
+        if (normalized.includes("remedio") || raw.includes("remédio") || raw.includes("med") || raw.includes("socorro")) return "#FF3C3C"; // vermelho
+        if (normalized.includes("comida") || normalized.includes("alimento")) return "#FF9A3C"; // laranja
+        if (normalized.includes("resgate") || normalized.includes("sos")) return "#FFD93C";     // amarelo
+        if (normalized.includes("abrigo")) return "#4CAF50";                                   // verde
+
+        return "#888888"; // padrão
+    }
+
+    // Distância em km entre dois pontos (fórmula de Haversine)
+    function getDistanceKm(lat1, lon1, lat2, lon2) {
+        const R = 6371; // raio da Terra em km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    navigator.geolocation.getCurrentPosition(async position => {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+
+        // 1. Criar mapa
+        const map = L.map('map').setView([userLat, userLng], 15);
+
+        // 2. Camada base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // 3. Marker do voluntário (pin normal)
+        L.marker([userLat, userLng]).addTo(map).bindPopup("Você está aqui");
+
+        // 4. Buscar pedidos próximos
+        const res = await fetch(`http://localhost:3000/help/nearby?lat=${userLat}&lng=${userLng}`);
+        const pedidos = await res.json();
+
+        // 5. Adicionar marcadores com efeito sonar
+        pedidos.forEach(p => {
+            const color = getColorByType(p.type || "");
+
+            // distância em km entre o voluntário e o pedido
+            const distKm = getDistanceKm(userLat, userLng, p.lat, p.lng);
+
+            // mapeia distância para tamanho do ícone
+            // ex.: 0 km -> 18px, 20+ km -> 50px
+            const minSize = 18;
+            const maxSize = 50;
+            const maxDistConsiderada = 20; // km
+            const fator = Math.min(distKm, maxDistConsiderada) / maxDistConsiderada;
+            const size = minSize + fator * (maxSize - minSize);
+
+            const icon = L.divIcon({
+                html: `<div class="pulse-marker" style="color:${color}"></div>`,
+                className: "",
+                iconSize: [size, size],
+                iconAnchor: [size / 2, size / 2] // centraliza o círculo
+            });
+
+            const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+
+            marker.bindPopup(`
+                <b style="color:${color}">${p.type}</b><br>
+                ${p.description}<br><br>
+                <small>Pedido #${p._id}</small><br>
+                <small>Distância aprox.: ${distKm.toFixed(1)} km</small>
+            `);
+        });
+
+    }, () => {
+        alert("Permita acesso à localização para ver os pedidos próximos.");
+    });
+</script>
+
+</body>
+</html>

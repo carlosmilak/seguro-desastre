@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>RescueLink - Pedir ajuda agora</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #050711;
+      color: #f5f5f5;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(10, 14, 40, 0.95);
+      border-radius: 16px;
+      padding: 24px 22px 20px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(120, 162, 255, 0.4);
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.88rem;
+      color: #c0c4ff;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      color: #e1e2ff;
+    }
+
+    select,
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px 11px;
+      border-radius: 10px;
+      border: 1px solid #273055;
+      background: #070a18;
+      color: #f5f5f5;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.18s, box-shadow 0.18s, background 0.18s;
+    }
+
+    select:focus,
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #5b8bff;
+      box-shadow: 0 0 0 1px rgba(91, 139, 255, 0.5);
+      background: #050814;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      max-height: 150px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .location-status {
+      font-size: 0.8rem;
+      margin-top: 4px;
+      color: #9ca4ff;
+    }
+
+    .error {
+      color: #ff6b81;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .success {
+      color: #5ef5a8;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px 0;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #ff3366, #ff7a3c);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 24px rgba(255, 97, 97, 0.55);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s;
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top, rgba(255,255,255,0.35), transparent 60%);
+      opacity: 0;
+      transform: translateY(40%);
+      transition: opacity 0.4s, transform 0.4s;
+    }
+
+    .btn:hover:not(.disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 0 32px rgba(255, 120, 120, 0.7);
+    }
+
+    .btn:hover::before {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .btn.disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn span.loader {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-top-color: transparent;
+      margin-right: 8px;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -2px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .tiny-info {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: #9aa0cc;
+      line-height: 1.4;
+    }
+
+    .badge-role {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.5);
+      color: #4ade80;
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.9);
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="badge-role">
+    <span class="badge-dot"></span>
+    Modo: pessoa que precisa de ajuda
+  </div>
+
+  <h1 class="title">Pedir ajuda agora</h1>
+  <p class="subtitle">
+    Preencha o tipo de ajuda, descreva o que está acontecendo e nós usamos sua localização
+    para avisar voluntários próximos.
+  </p>
+
+  <div class="field">
+    <label for="nome">Seu nome (opcional)</label>
+    <input id="nome" type="text" placeholder="Ex: Natan, Maria..." />
+  </div>
+
+  <div class="field">
+    <label for="tipo">Tipo de ajuda</label>
+    <select id="tipo">
+      <option value="">Selecione...</option>
+      <option value="água">Água potável</option>
+      <option value="comida">Comida / alimentos</option>
+      <option value="remédio">Remédios / primeiros socorros</option>
+      <option value="abrigo">Abrigo / local seguro</option>
+      <option value="resgate">Resgate / evacuação</option>
+      <option value="outro">Outro tipo de ajuda</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="descricao">Descreva o que você precisa</label>
+    <textarea id="descricao" placeholder="Ex: Estamos em 3 pessoas, com uma criança, a casa alagou até metade da parede..."></textarea>
+  </div>
+
+  <div class="field">
+    <label>Localização</label>
+    <div class="location-status" id="locStatus">
+      Vamos usar sua localização atual quando você clicar no botão.
+    </div>
+  </div>
+
+  <button id="btnEnviar" class="btn">
+    Enviar pedido de ajuda agora
+  </button>
+
+  <div id="msgErro" class="error" style="display:none;"></div>
+  <div id="msgOk" class="success" style="display:none;"></div>
+
+  <p class="tiny-info">
+    Sua localização é usada apenas para este pedido, para que voluntários próximos
+    consigam visualizar no mapa. Na versão final, isso será protegido com autenticação e criptografia.
+  </p>
+</div>
+
+<script>
+  const btn = document.getElementById("btnEnviar");
+  const msgErro = document.getElementById("msgErro");
+  const msgOk = document.getElementById("msgOk");
+  const locStatus = document.getElementById("locStatus");
+
+  function setLoading(isLoading) {
+    if (isLoading) {
+      btn.classList.add("disabled");
+      btn.innerHTML = '<span class="loader"></span>Enviando pedido...';
+    } else {
+      btn.classList.remove("disabled");
+      btn.innerHTML = "Enviar pedido de ajuda agora";
+    }
+  }
+
+  function showError(msg) {
+    msgErro.style.display = "block";
+    msgErro.textContent = msg;
+    msgOk.style.display = "none";
+  }
+
+  function showSuccess(msg) {
+    msgOk.style.display = "block";
+    msgOk.textContent = msg;
+    msgErro.style.display = "none";
+  }
+
+  btn.addEventListener("click", async () => {
+    if (btn.classList.contains("disabled")) return;
+
+    msgErro.style.display = "none";
+    msgOk.style.display = "none";
+
+    const nome = document.getElementById("nome").value.trim();
+    const tipo = document.getElementById("tipo").value.trim();
+    const descricao = document.getElementById("descricao").value.trim();
+
+    if (!tipo) {
+      showError("Selecione o tipo de ajuda.");
+      return;
+    }
+
+    if (!descricao) {
+      showError("Descreva rapidamente o que está acontecendo.");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      showError("Seu navegador não suporta geolocalização.");
+      return;
+    }
+
+    setLoading(true);
+    locStatus.textContent = "Obtendo sua localização em tempo real...";
+
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      locStatus.textContent = `Localização capturada. Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}.`;
+
+      try {
+        const res = await fetch("http://localhost:3000/help/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId: nome || "anonimo",
+            type: tipo,
+            description: descricao,
+            lat,
+            lng
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error(data);
+          showError(data.msg || data.error || "Erro ao enviar o pedido.");
+        } else {
+          showSuccess("Pedido enviado com sucesso! Voluntários próximos já podem ver você no mapa.");
+          document.getElementById("descricao").value = "";
+        }
+      } catch (err) {
+        console.error(err);
+        showError("Não foi possível enviar o pedido. Verifique sua conexão.");
+      } finally {
+        setLoading(false);
+      }
+
+    }, error => {
+      console.error(error);
+      setLoading(false);
+      if (error.code === error.PERMISSION_DENIED) {
+        showError("Você precisa permitir o acesso à localização para enviar o pedido.");
+        locStatus.textContent = "Permita o acesso à localização e tente novamente.";
+      } else {
+        showError("Não foi possível obter sua localização.");
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
